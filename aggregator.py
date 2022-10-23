@@ -27,4 +27,3 @@ class Aggregator:
             self.tul_map.append(p.tul, p)
             self.dojo_map.append(p.dojo, p)
         return self.massogi_map, self.tul_map, self.dojo_map
-            

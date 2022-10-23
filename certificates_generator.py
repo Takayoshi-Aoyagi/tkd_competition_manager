@@ -2,10 +2,11 @@ import os
 
 from docx import Document
 
-from excel_reader import ResultsExcelReader
+from excel_io import ResultsExcelReader
 
 
 def replace_text(p, old_text, new_text):
+    """ Replace placeholder text keeping styles """
     inline = p.runs
     # Loop added to work with runs (strings with same style)
     for i in range(len(inline)):
@@ -14,8 +15,8 @@ def replace_text(p, old_text, new_text):
             inline[i].text = text
 
 
-def generate_certificate(result):
-    """ Read template file, then replace placeholders """
+def generate_certificate(result, outdir):
+    """ Read template word file, then replace placeholders. """
     tmpl_doc = Document('templates/tmpl_certificate.docx')
 
     for p in tmpl_doc.paragraphs:
@@ -29,13 +30,13 @@ def generate_certificate(result):
         elif text == '%%NAME%%':
             replace_text(p, text, result.name)
     fname = f'{result.event}_{result.classification}_{result.rank}.docx'
-    tmpl_doc.save(os.path.join('certificates', fname))
+    tmpl_doc.save(os.path.join(outdir, fname))
 
 
-def main():
-    results = ResultsExcelReader().execute()
+def main(result_file='winners.xlsx', outdir='certificates'):
+    results = ResultsExcelReader(fpath=result_file).execute()
     for result in results:
-        generate_certificate(result)
+        generate_certificate(result, outdir)
 
 
 if __name__ == '__main__':
