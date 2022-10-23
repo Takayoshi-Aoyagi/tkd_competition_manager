@@ -1,15 +1,13 @@
-#import openpyxl
+from functools import cmp_to_key
+
 from openpyxl import Workbook
 
 from dataclasses import dataclass
 
-
 @dataclass
-class PlayerExcelWriter:
-    participants: list
-    massogi_map: map
-    tul_map: map
-    dojo_map: map
+class ExcelWriter:
+
+    filename: str
 
     def create_participants_sheet(self, wb, title, participants):
         sheet = wb.create_sheet(title=title)
@@ -30,32 +28,36 @@ class PlayerExcelWriter:
             sheet.cell(column=7, row=row, value=p.tul)
             sheet.cell(column=8, row=row, value=p.massogi)            
         
-    def create_dojo_book(self):
+    def execute(self):
         wb = Workbook()
+        self.create_sheets(wb)
+        del wb['Sheet'] # remove default sheet
+        wb.save(filename=self.filename)
 
+
+@dataclass
+class DojoExcelWriter(ExcelWriter):
+    participants: list
+    dojo_map: map
+
+    def create_sheets(self, wb):
         participants = []
         for _, ps in self.dojo_map.items():
             participants.extend(ps)
         self.create_participants_sheet(wb, '選手一覧', participants)
 
-        maps = [self.dojo_map]
-        for _map in maps:
-            for classification, category_participants in _map.items():
-                self.create_participants_sheet(wb, classification, category_participants)
-        del wb['Sheet'] # remove default sheet
-        wb.save(filename='道場別選手一覧.xlsx')
+        for classification, category_participants in self.dojo_map.items():
+            self.create_participants_sheet(wb, classification, category_participants)
+
+
+@dataclass
+class EventExcelWriter(ExcelWriter):
+    event_map: map
+
+    def create_sheets(self, wb):
+        classifications = sorted(self.event_map.keys())
+        for classification in classifications:
+            category_participants = self.event_map[classification]
+            self.create_participants_sheet(wb, classification, category_participants)
         
-    def create_classification_book(self):
-        wb = Workbook()
 
-        maps = [self.massogi_map, self.tul_map]
-        for _map in maps:
-            for classification, category_participants in _map.items():
-                self.create_participants_sheet(wb, classification, category_participants)
-
-        del wb['Sheet'] # remove default sheet
-        wb.save(filename='競技種目エントリー一覧.xlsx')
-
-    def execute(self):
-        self.create_dojo_book()
-        self.create_classification_book()        
