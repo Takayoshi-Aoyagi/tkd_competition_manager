@@ -1,7 +1,7 @@
 import os
 
 from aggregator import Aggregator
-from excel_io import ParticipantExcelReader, DojoExcelWriter, EventExcelWriter
+from excel_io import ParticipantExcelReader, DojoExcelWriter, EventExcelWriter, TournamentChartWriter
 
 
 def main(outdir='participants'):
@@ -19,6 +19,15 @@ def main(outdir='participants'):
     ).execute()
     EventExcelWriter(
         filename=os.path.join(outdir, 'トゥル選手一覧.xlsx'),
+        event_map=tul_map.get_map()
+    ).execute()
+
+    TournamentChartWriter(
+        filename=os.path.join(outdir, 'マッソギ対戦表.xlsx'),
+        event_map=massogi_map.get_map()
+    ).execute()
+    TournamentChartWriter(
+        filename=os.path.join(outdir, 'トゥル対戦表.xlsx'),
         event_map=tul_map.get_map()
     ).execute()
 

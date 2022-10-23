@@ -1,8 +1,8 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 # from functools import cmp_to_key
 import glob
 
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 import pandas as pd
 
 from participant import Participant
@@ -169,3 +169,47 @@ class EventExcelWriter(ExcelWriter):
             category_participants = self.event_map[classification]
             self.create_participants_sheet(wb, classification,
                                            category_participants)
+
+
+@dataclass
+class TournamentChartWriter:
+    filename: str
+    event_map: map
+    template_file: str = 'templates/tmpl_tournament.xlsx'
+    tmpl_sheet_names: list[int] = field(default_factory=lambda: [2, 4, 8, 16])
+
+    def delete_sheets(self, wb):
+        for name in list(map(str, self.tmpl_sheet_names)):
+            del wb[name]  # remove default sheet
+
+    def get_sheet(self, wb, num_participants, classification):
+        for limit in self.tmpl_sheet_names:
+            if num_participants <= limit:
+                sheet = wb.copy_worksheet(wb[str(limit)])
+                sheet.title = classification
+                return sheet
+        raise Exception(f'Limit exceeded: {num_participants}')
+
+    def write_sheet(self, participants, sheet):
+        col_index = 7
+        for i, p in enumerate(participants):
+            row_index = i * 4 + 2
+            name_dojo = f'{p.name} ({p.dojo})'
+            sheet.cell(column=col_index, row=row_index, value=name_dojo)
+            sheet.cell(column=col_index, row=row_index + 1, value=p.kana_name)
+
+    def create_sheets(self, wb):
+        classifications = sorted(self.event_map.keys())
+        for classification in classifications:
+            if classification == '×':
+                continue
+            category_participants = self.event_map[classification]
+            num_participants = len(category_participants)
+            sheet = self.get_sheet(wb, num_participants, classification)
+            self.write_sheet(category_participants, sheet)
+
+    def execute(self):
+        wb = load_workbook(self.template_file)
+        self.create_sheets(wb)
+        self.delete_sheets(wb)
+        wb.save(filename=self.filename)
