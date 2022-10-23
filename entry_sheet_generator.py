@@ -1,11 +1,18 @@
 import os
 
 from aggregator import Aggregator
-from excel_io import ParticipantExcelReader, DojoExcelWriter, EventExcelWriter, TournamentChartWriter
+from excel_io import (
+    ParticipantExcelReader,
+    DojoExcelWriter,
+    EventExcelWriter,
+    TournamentChartWriter
+)
+from merger import Merger
 
 
 def main(outdir='participants'):
     participants = ParticipantExcelReader().execute()
+    participants = Merger(participants).execute()
 
     massogi_map, tul_map, dojo_map = Aggregator(participants).execute()
     DojoExcelWriter(
