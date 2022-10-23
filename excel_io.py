@@ -170,6 +170,15 @@ class EventExcelWriter(ExcelWriter):
             self.create_participants_sheet(wb, classification,
                                            category_participants)
 
+def get_tournament_order(num):
+    num_order = {
+        2: [0, 1],
+        4: [0, 2, 1, 3],
+        8: [0, 4, 2, 6, 1, 5, 3, 7],
+        16: [0, 8, 4, 12, 2, 14, 6, 10, 3, 11, 7, 15, 5, 13, 9, 1]
+    }
+    return num_order[num]
+
 
 @dataclass
 class TournamentChartWriter:
@@ -187,13 +196,15 @@ class TournamentChartWriter:
             if num_participants <= limit:
                 sheet = wb.copy_worksheet(wb[str(limit)])
                 sheet.title = classification
-                return sheet
+                return sheet, limit
         raise Exception(f'Limit exceeded: {num_participants}')
 
-    def write_sheet(self, participants, sheet):
+    def write_sheet(self, participants, sheet, sheet_name):
         col_index = 7
+        order_list = get_tournament_order(sheet_name)
         for i, p in enumerate(participants):
-            row_index = i * 4 + 2
+            order = order_list[i]
+            row_index = order * 4 + 2
             name_dojo = f'{p.name} ({p.dojo})'
             sheet.cell(column=col_index, row=row_index, value=name_dojo)
             sheet.cell(column=col_index, row=row_index + 1, value=p.kana_name)
@@ -205,8 +216,9 @@ class TournamentChartWriter:
                 continue
             category_participants = self.event_map[classification]
             num_participants = len(category_participants)
-            sheet = self.get_sheet(wb, num_participants, classification)
-            self.write_sheet(category_participants, sheet)
+            sheet, sheet_name = self.get_sheet(wb, num_participants,
+                                               classification)
+            self.write_sheet(category_participants, sheet, sheet_name)
 
     def execute(self):
         wb = load_workbook(self.template_file)
