@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-# from functools import cmp_to_key
+from functools import cmp_to_key
 import glob
 
 from openpyxl import Workbook, load_workbook
@@ -158,15 +158,21 @@ class DojoExcelWriter(ExcelWriter):
             self.create_participants_sheet(wb, classification,
                                            category_participants)
 
+def sort_by_participahts_desc(e1, e2):
+    p_list1 = e1[1]
+    p_list2 = e1[1]
+    return len(p_list1) - len(p_list2)
+
 
 @dataclass
 class EventExcelWriter(ExcelWriter):
     event_map: map
 
     def create_sheets(self, wb):
-        classifications = sorted(self.event_map.keys())
-        for classification in classifications:
-            category_participants = self.event_map[classification]
+        # sort by number of participants (desc)
+        sorted_items = sorted(
+            self.event_map.items(), key=cmp_to_key(sort_by_participahts_desc))
+        for classification, category_participants in sorted_items:
             self.create_participants_sheet(wb, classification,
                                            category_participants)
 
