@@ -10,6 +10,13 @@ from excel_io import (
 from merger import Merger
 
 
+def dump(class_participant_map):
+    print("========================")
+    print(class_participant_map.name)
+    for key, items in class_participant_map._map.items():
+        print(key, items)
+
+
 def main(outdir='participants'):
     participants = ParticipantExcelReader().execute()
     participants = Merger(participants).execute()

@@ -175,7 +175,11 @@ def get_tournament_order(num):
         2: [0, 1],
         4: [0, 2, 1, 3],
         8: [0, 4, 2, 6, 1, 5, 3, 7],
-        16: [0, 8, 4, 12, 2, 14, 6, 10, 3, 11, 7, 15, 5, 13, 9, 1]
+        16: [0, 8, 4, 12, 2, 14, 6, 10, 3, 11, 7, 15, 5, 13, 9, 1],
+        32: [0, 16, 8, 24, 12, 28, 4, 20, 14, 30,
+             6, 22, 10, 18, 26, 2, 5, 25, 13, 29,
+             11, 23, 19, 3, 9, 27, 7, 21, 31, 17,
+             15, 1]
     }
     return num_order[num]
 
@@ -185,7 +189,7 @@ class TournamentChartWriter:
     filename: str
     event_map: map
     template_file: str = 'templates/tmpl_tournament.xlsx'
-    tmpl_sheet_names: list[int] = field(default_factory=lambda: [2, 4, 8, 16])
+    tmpl_sheet_names: list[int] = field(default_factory=lambda: [2, 4, 8, 16, 32])
 
     def delete_sheets(self, wb):
         for name in list(map(str, self.tmpl_sheet_names)):
@@ -197,7 +201,7 @@ class TournamentChartWriter:
                 sheet = wb.copy_worksheet(wb[str(limit)])
                 sheet.title = classification
                 return sheet, limit
-        raise Exception(f'Limit exceeded: {num_participants}')
+        raise Exception(f'Limit exceeded: {num_participants}: {classification}')
 
     def write_sheet(self, participants, sheet, sheet_name):
         col_index = 7

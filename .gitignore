@@ -3,4 +3,5 @@
 __pycache__
 certificates/*.docx
 input/*.xlsx
+input/*.xls
 participants/*.xlsx
