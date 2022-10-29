@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from functools import cmp_to_key
 import glob
+import sys
 
 from openpyxl import Workbook, load_workbook
 import pandas as pd
@@ -8,7 +9,10 @@ import pandas as pd
 from participant import Participant
 
 
+@dataclass
 class ParticipantExcelReader:
+    vacant_to_withdraw: bool = False
+    errors: list = field(default_factory=list)
 
     def get_degree(self, val):
         if val == '段、級':
@@ -24,6 +28,14 @@ class ParticipantExcelReader:
             return None
         return name
 
+    def get_cell_value(self, cell, dojo, name, column):
+        if type(cell) is not str:
+            if self.vacant_to_withdraw and pd.isnull(cell):
+                return '×'
+            err = f'ERROR: Invalid value ({dojo}, {name}, {column}={cell})'
+            self.errors.append(err)
+        return cell
+
     def read_row(self, row):
         name = self.get_name(row[1])
         if pd.isnull(name):
@@ -33,9 +45,9 @@ class ParticipantExcelReader:
         if degree is None:
             return None
         dojo = row[5]
-        tul = row[6]
-        massogi = row[9]
-        roma_name = row[13]
+        tul = self.get_cell_value(row[6], dojo, name, 'トゥル')
+        massogi = self.get_cell_value(row[9], dojo, name, 'マッソギ')
+        roma_name = self.get_cell_value(row[13], dojo, name, '英語表記')
         kana_name = row[15]
         # print(row)
         participant = Participant(
@@ -64,14 +76,23 @@ class ParticipantExcelReader:
         pattern = f'{input_dir}/*.xlsx'
         all_participants = []
         for fpath in glob.glob(pattern):
-            # print(fpath)
+            print(f'Reading file: {fpath}')
             participants = self.read_file(fpath)
             all_participants.extend(participants)
+            print('Done')
         return all_participants
+
+    def exit_with_error(self):
+        print('=============================')
+        for err in self.errors:
+            print(err)
+        sys.exit(1)
 
     def execute(self, input_dir='input'):
         all_participants = self.read_files(input_dir)
         # print(all_participants)
+        if len(self.errors) > 0:
+            self.exit_with_error()
         return all_participants
 
 

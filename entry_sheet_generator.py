@@ -1,3 +1,4 @@
+from argparse import ArgumentParser
 import os
 
 from aggregator import Aggregator
@@ -17,8 +18,11 @@ def dump(class_participant_map):
         print(key, items)
 
 
-def main(outdir='participants'):
-    participants = ParticipantExcelReader().execute()
+def main(args):
+    outdir = args.outdir
+    participants = ParticipantExcelReader(
+        vacant_to_withdraw=args.vacant_to_withdraw
+    ).execute()
     participants = Merger(participants).execute()
 
     massogi_map, tul_map, dojo_map = Aggregator(participants).execute()
@@ -47,4 +51,8 @@ def main(outdir='participants'):
 
 
 if __name__ == '__main__':
-    main()
+    parser = ArgumentParser()
+    parser.add_argument('--outdir', default='participants')
+    parser.add_argument('--vacant-to-withdraw', action='store_true')
+    args = parser.parse_args()
+    main(args)
