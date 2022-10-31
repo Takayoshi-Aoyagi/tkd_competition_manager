@@ -22,14 +22,15 @@ class Merger:
             if curr_class not in curr_classes:
                 continue
             merged_class = mapping[curr_class]
-            print(p)
+            # print(p)
             setattr(p, event, merged_class)
-            print(p)
 
     def execute(self):
+        print('Merging')
         if not os.path.exists(self.config_path):
             return self.participants
         config = self.get_config()
         for p in self.participants:
             self.merge(config, p)
+        print('Done')
         return self.participants

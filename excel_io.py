@@ -3,10 +3,14 @@ from functools import cmp_to_key
 import glob
 import sys
 
+import numpy as np
 from openpyxl import Workbook, load_workbook
+from openpyxl.styles import Alignment, PatternFill
+from openpyxl.styles.borders import Border, Side
 import pandas as pd
 
 from participant import Participant
+from match_utils import MatchUtils
 
 
 @dataclass
@@ -30,10 +34,10 @@ class ParticipantExcelReader:
 
     def get_cell_value(self, cell, dojo, name, column):
         if type(cell) is not str:
+            err = f'Invalid value ({dojo}, {name}, {column}={cell})'
+            self.errors.append(err)
             if self.vacant_to_withdraw and pd.isnull(cell):
                 return '×'
-            err = f'ERROR: Invalid value ({dojo}, {name}, {column}={cell})'
-            self.errors.append(err)
         return cell
 
     def read_row(self, row):
@@ -84,8 +88,15 @@ class ParticipantExcelReader:
 
     def exit_with_error(self):
         print('=============================')
+        level = 'ERROR:'
+        if self.vacant_to_withdraw is True:
+            level = 'WARNING:'
+        print(level)
         for err in self.errors:
             print(err)
+        print('=============================')
+        if self.vacant_to_withdraw is True:
+            return
         sys.exit(1)
 
     def execute(self, input_dir='input'):
@@ -125,7 +136,7 @@ class ResultsExcelReader:
                     rank=rank,
                     name=name)
                 results.append(result)
-                print(result)
+                # print(result)
         return results
 
     def execute(self):
@@ -158,10 +169,12 @@ class ExcelWriter:
             sheet.cell(column=8, row=row, value=p.massogi)
 
     def execute(self):
+        print(f'Writing: {self.filename}')
         wb = Workbook()
         self.create_sheets(wb)
         del wb['Sheet']  # remove default sheet
         wb.save(filename=self.filename)
+        print('Done')
 
 
 @dataclass
@@ -252,7 +265,46 @@ class TournamentChartWriter:
             self.write_sheet(category_participants, sheet, sheet_name)
 
     def execute(self):
+        print(f'Writing: {self.filename}')
         wb = load_workbook(self.template_file)
         self.create_sheets(wb)
         self.delete_sheets(wb)
+        wb.save(filename=self.filename)
+        print('Done')
+
+
+@dataclass
+class TimetableWriter:
+    filename: str
+    massogi: map
+    tul: map
+    template_file: str = 'templates/tmpl_timetable.xlsx'
+    has_3rd_place_match: bool = False
+
+    def execute(self):
+        rows = []
+        events = [
+            [self.tul, 'トゥル'],
+            [self.massogi, 'マッソギ']
+        ]
+        for event in events:
+            _rows = MatchUtils.get_timetable_items(event[0], event[1])
+            rows.extend(_rows)
+        wb = load_workbook(self.template_file)
+        sheet = wb['タイムテーブル']
+
+        row_index = 1
+        side1 = Side(style='thin', color='000000')
+        border = Border(top=side1, bottom=side1, left=side1, right=side1)
+        for row in rows:
+            text = row[-1]
+            units = int(row[-2] / 5)
+            cell = sheet.cell(column=7, row=row_index, value=text)
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+            cell.fill = PatternFill(patternType='solid', fgColor='7fffd4')
+            cell.border = border
+            begin = f'G{row_index}'
+            end = f'G{row_index+units-1}'
+            sheet.merge_cells(f'{begin}:{end}')
+            row_index += units
         wb.save(filename=self.filename)

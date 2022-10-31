@@ -22,8 +22,10 @@ class Aggregator:
         self.dojo_map = ClassParticipantMap('Dojo')
 
     def execute(self):
+        print('Aggregating')
         for p in self.participants:
             self.massogi_map.append(p.massogi, p)
             self.tul_map.append(p.tul, p)
             self.dojo_map.append(p.dojo, p)
+        print('Done')
         return self.massogi_map, self.tul_map, self.dojo_map
