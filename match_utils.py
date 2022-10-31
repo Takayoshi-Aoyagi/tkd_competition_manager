@@ -78,3 +78,91 @@ class MatchUtils:
                     rows.append([
                         event_type, classification, 2, 1, 10, f'{event_type} {classification}\n決勝'])
         return rows
+
+
+class EnUtils:
+
+    @classmethod
+    def get_gender(cls, jp):
+        if '男子' in jp:
+            gender = 'male'
+        elif '女子' in jp:
+            gender = 'female'
+        else:
+            gender = None
+        return gender
+
+    @classmethod
+    def get_belt(cls, jp):
+        colors = []
+        if '白' in jp:
+            colors.append('white')
+        if '黄' in jp:
+            colors.append('yellow')
+        if '緑' in jp:
+            colors.append('green')
+        if '青' in jp:
+            colors.append('blue')
+        if '赤' in jp:
+            colors.append('red')
+        if '黒' in jp:
+            colors.append('black')
+        belt = None if len(colors) == 0 else ' '.join(colors) + ' belt'
+        return belt
+
+    @classmethod
+    def get_section(cls, jp):
+        if '幼年' in jp:
+            sec = 'childhood'
+        elif '小学' in jp:
+            sec = 'elementary'
+        elif '成年' in jp:
+            sec = ''
+        elif '中学' in jp:
+            sec = 'junior high school'
+        return sec
+
+    @classmethod
+    def get_ordinal(cls, n):
+        if n == 1:
+            return '1st'
+        elif n == 2:
+            return '2nd'
+        elif n == 3:
+            return '3rd'
+        else:
+            return f'{n}th'
+
+    @classmethod
+    def get_school_years(cls, jp):
+        years = []
+        items = [
+            ['６', 6],
+            ['５', 5],
+            ['４', 4],
+            ['３', 3],
+            ['２', 2],
+            ['１', 1]
+        ]
+        for item in items:
+            if item[0] in jp:
+                years.append(item[1])
+        years.sort()
+        num_years = len(years)
+        if num_years == 0:
+            return None
+        elif num_years == 1:
+            ordinal = cls.get_ordinal(years[0])
+            return f'{ordinal} grade'
+        else:
+            o1 = cls.get_ordinal(years[0])
+            o2 = cls.get_ordinal(years[-1])
+            return f'{o1}-{o2} grade'
+
+    @classmethod
+    def to_en_classname(cls, jp):
+        items = [cls.get_gender(jp), cls.get_belt(jp), cls.get_section(jp),
+                 cls.get_school_years(jp)]
+        items = [i for i in items if (i is not None and i != '')]
+        name = ' '.join(items) + ' section'
+        return name.capitalize()

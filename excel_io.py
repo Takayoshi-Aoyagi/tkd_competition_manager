@@ -10,7 +10,7 @@ from openpyxl.styles.borders import Border, Side
 import pandas as pd
 
 from participant import Participant
-from match_utils import MatchUtils
+from match_utils import MatchUtils, EnUtils
 
 
 @dataclass
@@ -308,3 +308,47 @@ class TimetableWriter:
             sheet.merge_cells(f'{begin}:{end}')
             row_index += units
         wb.save(filename=self.filename)
+
+
+@dataclass
+class WinnerListWriter:
+    massogi: map
+    tul: map
+    filename: str
+
+    def execute(self):
+        columns = [
+            '番号', '種目', '出場種目', '英語名',
+            '1st PRIZE', '2nd PRIZE', '3rd PRIZE', '3rd PRIZE']
+        events = [
+            [self.tul, 'Tul'],
+            [self.massogi, 'Massogi']
+        ]
+        rows = []
+        index = 0
+        for event in events:
+            event_name = event[1]
+            classifications = event[0].keys()
+            for classification in classifications:
+                if classification == '×':
+                    continue
+                index += 1
+                rows.append([
+                    index, event_name,
+                    classification, EnUtils.to_en_classname(classification),
+                    '', '', '', ''])
+        others = [
+            ['少年最優秀選手賞', 'Most valuable player award junior section'],
+            ['成年最優秀選手賞', 'Most valuable player award senior section'],
+            ['少年敢闘賞', 'Fighting-spirit award junior section'],
+            ['成年敢闘賞', 'Fighting-spirit award senior section'],
+            ['少年技能賞', 'Technique award junior section'],
+            ['成年技能賞', 'Technique award junior section']
+        ]
+        for other in others:
+            index += 1
+            rows.append([
+                index, '', other[0], other[1], '', '', '', ''])
+
+        df = pd.DataFrame(data=rows, columns=columns)
+        df.to_excel(self.filename, index=False)

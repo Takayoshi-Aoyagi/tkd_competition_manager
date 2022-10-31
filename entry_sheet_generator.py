@@ -7,7 +7,8 @@ from excel_io import (
     DojoExcelWriter,
     EventExcelWriter,
     TournamentChartWriter,
-    TimetableWriter
+    TimetableWriter,
+    WinnerListWriter
 )
 from merger import Merger
 
@@ -52,6 +53,12 @@ def main(args):
 
     TimetableWriter(
         filename=os.path.join(outdir, 'タイムテーブル.xlsx'),
+        massogi=massogi_map.get_map(),
+        tul=tul_map.get_map()
+    ).execute()
+
+    WinnerListWriter(
+        filename=os.path.join(outdir, 'winners_blank.xlsx'),
         massogi=massogi_map.get_map(),
         tul=tul_map.get_map()
     ).execute()
